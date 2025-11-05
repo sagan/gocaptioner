@@ -1,0 +1,8 @@
+/gokps
+*.exe
+/.local
+/dist
+/*.txt
+/*.json
+/config.yaml
+/config.toml
