@@ -9,7 +9,7 @@ Usage:
 Set `GEMINI_API_KEY` env. Then run:
 
 ```
-gocaptioner -dir .
+gocaptioner caption --dir .
 ```
 
 For each image file in target dir, it generates a `<filename>.txt` file, example:
@@ -18,16 +18,13 @@ For each image file in target dir, it generates a `<filename>.txt` file, example
 ohwx woman, a portrait of a stern-looking woman from the mid-19th century, wearing a dark dress and a white bonnet with lace trim, conveying a sense of solemnity and strict traditionalism
 ```
 
-If `-identity` flag is set, it prepends it to the caption of each photo.
+If `--identity` flag is set, it prepends it to the caption of each photo.
 
 ## Flags
 
 ```
-gocaptioner.exe:
-  -dir string
-        Required: Path to the image directory
-  -force
-        Optional: Force re-generation of all captions, even if .txt files exist
-  -identity string
-        Optional: The trigger word (e.g., 'kongrongjin_3y') to prepend to each caption
+gocaptioner caption:
+      --dir string        Required: Path to the image directory
+      --force             Optional: Force re-generation of all captions, even if .txt files exist
+      --identity string   Optional: The trigger word (e.g., 'kongrongjin_3y') to prepend to each caption
 ```
