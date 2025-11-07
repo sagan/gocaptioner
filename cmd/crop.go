@@ -3,15 +3,15 @@ package cmd
 import (
 	"fmt"
 	"image"
-	"image/jpeg"
 	"image/png"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/disintegration/imaging" // ADD THIS
 	"github.com/muesli/smartcrop"
-	"github.com/nfnt/resize"
+	"github.com/rwcarlsen/goexif/exif" // ADD THIS
 	"github.com/spf13/cobra"
 )
 
@@ -93,7 +93,8 @@ func isProcessableImage(filename string) bool {
 type resizer struct{}
 
 func (r resizer) Resize(img image.Image, width, height uint) image.Image {
-	return resize.Resize(width, height, img, resize.Lanczos3)
+	// Use the new imaging library's Resize function
+	return imaging.Resize(img, int(width), int(height), imaging.Lanczos)
 }
 
 func processImageFile(inputPath, outputPath string, width, height int) error {
@@ -103,10 +104,40 @@ func processImageFile(inputPath, outputPath string, width, height int) error {
 	}
 	defer file.Close()
 
-	img, _, err := image.Decode(file)
+	// -----------------------------------------------------------------
+	// START: EXIF Orientation Fix
+	// -----------------------------------------------------------------
+
+	// 1. Read EXIF data first
+	x, err := exif.Decode(file)
+	var orientation int
+	if err == nil { // If EXIF data exists
+		tag, err := x.Get(exif.Orientation)
+		if err == nil { // If Orientation tag exists
+			orientation, _ = tag.Int(0) // Get the orientation value
+		}
+	}
+
+	// 2. Rewind the file to read it again for image decoding
+	_, err = file.Seek(0, 0)
+	if err != nil {
+		return fmt.Errorf("failed to rewind file: %v", err)
+	}
+
+	// 3. Decode the image (and get its format)
+	img, imgFormat, err := image.Decode(file)
 	if err != nil {
 		return err
 	}
+
+	// 4. Apply rotation IF it's a JPEG and has an orientation tag
+	if imgFormat == "jpeg" && orientation > 1 {
+		img = applyExifOrientation(img, orientation)
+	}
+
+	// -----------------------------------------------------------------
+	// END: EXIF Orientation Fix
+	// -----------------------------------------------------------------
 
 	// Calculate crop size
 	targetRatio := float64(width) / float64(height)
@@ -134,27 +165,61 @@ func processImageFile(inputPath, outputPath string, width, height int) error {
 	}
 
 	croppedImg := img.(subImager).SubImage(topCrop)
-	resizedImg := resize.Resize(uint(width), uint(height), croppedImg, resize.Lanczos3)
 
-	outFile, err := os.Create(outputPath)
-	if err != nil {
-		return err
-	}
-	defer outFile.Close()
+	// Use imaging.Resize for the final resize
+	resizedImg := imaging.Resize(croppedImg, width, height, imaging.Lanczos)
 
+	// -----------------------------------------------------------------
+	// START: Corrected Save Logic
+	// -----------------------------------------------------------------
+
+	// REMOVED:
+	// outFile, err := os.Create(outputPath)
+	// ...
+	// defer outFile.Close()
+
+	// Use imaging.Save, passing the image and the *path string*.
 	ext := strings.ToLower(filepath.Ext(outputPath))
 	switch ext {
 	case ".jpg", ".jpeg":
-		err = jpeg.Encode(outFile, resizedImg, nil)
+		// Correct signature: imaging.Save(image, path, ...options)
+		err = imaging.Save(resizedImg, outputPath, imaging.JPEGQuality(95))
 	case ".png":
-		err = png.Encode(outFile, resizedImg)
+		// Correct signature: imaging.Save(image, path, ...options)
+		err = imaging.Save(resizedImg, outputPath, imaging.PNGCompressionLevel(png.DefaultCompression))
 	default:
 		return fmt.Errorf("unsupported image format: %s", ext)
 	}
+
+	// -----------------------------------------------------------------
+	// END: Corrected Save Logic
+	// -----------------------------------------------------------------
 
 	if err == nil {
 		fmt.Printf("Successfully cropped and resized %s to %s\n", inputPath, outputPath)
 	}
 
 	return err
+}
+
+// applyExifOrientation checks for an EXIF orientation tag and rotates the image accordingly.
+func applyExifOrientation(img image.Image, orientation int) image.Image {
+	switch orientation {
+	case 2: // F: Horizontal Flip
+		return imaging.FlipH(img)
+	case 3: // R180: Rotate 180
+		return imaging.Rotate180(img)
+	case 4: // FV: Vertical Flip
+		return imaging.FlipV(img)
+	case 5: // T: Transpose (FlipH + R270)
+		return imaging.Transpose(img)
+	case 6: // R270: Rotate 270 (or 90 clockwise)
+		return imaging.Rotate270(img)
+	case 7: // TV: Transverse (FlipV + R270)
+		return imaging.Transverse(img)
+	case 8: // R90: Rotate 90 (or 270 clockwise)
+		return imaging.Rotate90(img)
+	default: // 1 or unknown
+		return img
+	}
 }
