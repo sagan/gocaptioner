@@ -50,7 +50,7 @@ type Candidate struct {
 
 const (
 	// Use the correct model for image understanding
-	apiModel   = "gemini-1.5-flash-preview-0514"
+	apiModel   = "gemini-2.5-flash"
 	apiBaseURL = "https://generativelanguage.googleapis.com/v1beta/models/"
 
 	// This prompt is optimized for LoRa training captions
