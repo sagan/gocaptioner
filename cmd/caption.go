@@ -62,7 +62,7 @@ const (
 var captionCmd = &cobra.Command{
 	Use:   "caption",
 	Short: "Generate captions for images in a directory",
-	Long:  `This command generates captions for all images in a specified directory using the Gemini API.`, 
+	Long:  `This command generates captions for all images in a specified directory using the Gemini API.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// 1. Get API Key from environment
 		apiKey := os.Getenv("GEMINI_API_KEY")
@@ -191,32 +191,32 @@ func processImage(client *http.Client, imagePath string, apiKey string, force bo
 	// 4. API Call with simple exponential backoff
 	for i := 0; i < maxRetries; i++ {
 		req, err := http.NewRequest("POST", apiUrl, bytes.NewBuffer(jsonPayload))
-			if err != nil {
-				return fmt.Errorf("failed to create request: %w", err)
-			}
-			req.Header.Set("Content-Type", "application/json")
+		if err != nil {
+			return fmt.Errorf("failed to create request: %w", err)
+		}
+		req.Header.Set("Content-Type", "application/json")
 
-			resp, reqErr = client.Do(req)
+		resp, reqErr = client.Do(req)
 
-			// If there's a network error, retry
-			if reqErr != nil {
-				fmt.Printf("  ...network error (%v), retrying in %v\n", reqErr, delay)
-				time.Sleep(delay)
-				delay *= 2 // Double the delay for next retry
-				continue
-			}
+		// If there's a network error, retry
+		if reqErr != nil {
+			fmt.Printf("  ...network error (%v), retrying in %v\n", reqErr, delay)
+			time.Sleep(delay)
+			delay *= 2 // Double the delay for next retry
+			continue
+		}
 
-			// Check for 429 (Throttling) or 5xx (Server Error) and retry
-			if resp.StatusCode == 429 || resp.StatusCode >= 500 {
-				fmt.Printf("  ...API error (%s), retrying in %v\n", resp.Status, delay)
-				resp.Body.Close() // Must close body before retrying
-				time.Sleep(delay)
-				delay *= 2
-				continue
-			}
+		// Check for 429 (Throttling) or 5xx (Server Error) and retry
+		if resp.StatusCode == 429 || resp.StatusCode >= 500 {
+			fmt.Printf("  ...API error (%s), retrying in %v\n", resp.Status, delay)
+			resp.Body.Close() // Must close body before retrying
+			time.Sleep(delay)
+			delay *= 2
+			continue
+		}
 
-			// Any other status code is either success or a non-retryable error
-			break
+		// Any other status code is either success or a non-retryable error
+		break
 	}
 
 	// If all retries failed on a network error

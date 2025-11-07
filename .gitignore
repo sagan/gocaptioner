@@ -1,8 +1,2 @@
-/gokps
-*.exe
-/.local
-/dist
-/*.txt
-/*.json
-/config.yaml
-/config.toml
+/test-images
+/test-images-crop
