@@ -33,7 +33,11 @@ var cropCmd = &cobra.Command{
 		}
 
 		if output == "" {
-			output = dir + "-crop"
+			absDir, err := filepath.Abs(dir)
+			if err != nil {
+				log.Fatalf("Failed to resolve path %s: %v", dir, err)
+			}
+			output = absDir + "-crop"
 		}
 
 		if err := os.MkdirAll(output, 0755); err != nil {
