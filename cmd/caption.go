@@ -77,7 +77,7 @@ var captionCmd = &cobra.Command{
 
 		if dirFlag == "" {
 			fmt.Println("Error: -dir flag is required.")
-			cmd.Help()
+			_ = cmd.Help()
 			os.Exit(1)
 		}
 		dirPath := dirFlag
