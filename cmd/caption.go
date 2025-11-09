@@ -183,7 +183,7 @@ func processImage(client *http.Client, imagePath string, apiKey string, force bo
 	}
 
 	apiUrl := fmt.Sprintf("%s%s:generateContent?key=%s", apiBaseURL, apiModel, apiKey)
-
+	var geminiResp GeminiResponse
 	var resp *http.Response
 	var reqErr error
 	delay := 2 * time.Second // Initial retry delay
@@ -209,13 +209,37 @@ func processImage(client *http.Client, imagePath string, apiKey string, force bo
 		// Check for 429 (Throttling) or 5xx (Server Error) and retry
 		if resp.StatusCode == 429 || resp.StatusCode >= 500 {
 			fmt.Printf("  ...API error (%s), retrying in %v\n", resp.Status, delay)
-			resp.Body.Close() // Must close body before retrying
+			if resp.Body != nil {
+				resp.Body.Close() // Must close body before retrying
+			}
 			time.Sleep(delay)
 			delay *= 2
 			continue
 		}
 
-		// Any other status code is either success or a non-retryable error
+		// Any other non-200 status code is a non-retryable error
+		if resp.StatusCode != http.StatusOK {
+			break // Exit the loop to handle the error below
+		}
+
+		// Try to decode the response. If it's empty, we might want to retry.
+		if err := json.NewDecoder(resp.Body).Decode(&geminiResp); err != nil {
+			if resp.Body != nil {
+				resp.Body.Close()
+			}
+			return fmt.Errorf("failed to decode API response: %w", err)
+		}
+		resp.Body.Close() // Close body after successful decode
+
+		// If the response is empty, retry
+		if len(geminiResp.Candidates) == 0 || len(geminiResp.Candidates[0].Content.Parts) == 0 || geminiResp.Candidates[0].Content.Parts[0].Text == "" {
+			fmt.Printf("  ...API returned empty caption, retrying in %v\n", delay)
+			time.Sleep(delay)
+			delay *= 2
+			continue
+		}
+
+		// If we got a valid response, break the loop
 		break
 	}
 
@@ -223,24 +247,13 @@ func processImage(client *http.Client, imagePath string, apiKey string, force bo
 	if reqErr != nil {
 		return fmt.Errorf("all retries failed: %w", reqErr)
 	}
-	defer resp.Body.Close()
 
-	// Handle non-OK, non-retryable status codes
-	if resp.StatusCode != http.StatusOK {
-		var errResp map[string]interface{}
-		if json.NewDecoder(resp.Body).Decode(&errResp) == nil {
-			return fmt.Errorf("API request failed with status %s: %v", resp.Status, errResp)
-		}
+	// Handle non-OK, non-retryable status codes after the loop
+	if resp != nil && resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("API request failed with status %s", resp.Status)
 	}
 
-	// 5. Parse the successful response
-	var geminiResp GeminiResponse
-	if err := json.NewDecoder(resp.Body).Decode(&geminiResp); err != nil {
-		return fmt.Errorf("failed to decode API response: %w", err)
-	}
-
-	// Extract the caption text
+	// 5. Extract the caption text (already decoded in the loop)
 	if len(geminiResp.Candidates) == 0 || len(geminiResp.Candidates[0].Content.Parts) == 0 || geminiResp.Candidates[0].Content.Parts[0].Text == "" {
 		return fmt.Errorf("no caption generated (empty response from API)")
 	}
