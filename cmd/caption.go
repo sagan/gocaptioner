@@ -54,7 +54,25 @@ const (
 	apiBaseURL = "https://generativelanguage.googleapis.com/v1beta/models/"
 
 	// This prompt is optimized for LoRa training captions
-	captionPrompt = "Generate a simple, comma-separated caption for this image for LoRa training. Describe only the main subject, their clothing, their pose/action, and the background setting. Do NOT describe artistic style, camera angles, lighting, or blurry effects."
+	captionPrompt = `Generate a simple, comma-separated caption for this image, optimized for LoRa training.
+
+RULES:
+1.  Focus ONLY on the main subject.
+2.  Describe visible attributes: clothing (e.g., "pink jacket"), hairstyle (e.g., "ponytail"), pose (e.g., "crouching", "standing"), and expression (e.g., "smiling").
+3.  You can describe an object that the main subject is interacting with (e.g., "holding a toy").
+
+CRITICAL:
+* DO NOT use general category words like "girl", "boy", "child", "woman", "man", or "person".
+* DO NOT describe the background, environment, or location (e.g., AVOID "in a room", "child's room", "indoor", "outside", "at home").
+* DO NOT describe artistic style, lighting, camera quality, or effects.
+
+Good example: "pink puffer jacket, ponytail, hair clips, crouching, holding toy".
+
+Bad example: "young girl, pink puffer jacket, fur collar, black pants, slippers, pink bunny hair clips, ponytail, pink bobbles, crouching, holding a pink plastic toy, child's room, pink desk, pink chair, toys, curtains, wooden floor".
+"
+
+
+`
 
 	maxRetries = 3 // Number of retries for API calls
 )
@@ -121,7 +139,7 @@ func init() {
 	rootCmd.AddCommand(captionCmd)
 	captionCmd.Flags().String("dir", "", "Required: Path to the image directory")
 	captionCmd.Flags().Bool("force", false, "Optional: Force re-generation of all captions, even if .txt files exist")
-	captionCmd.Flags().String("identity", "", "Optional: The trigger word (e.g., 'kongrongjin_3y') to prepend to each caption")
+	captionCmd.Flags().String("identity", "", "Optional: The trigger word (e.g., 'foobar' or 'photo of foobar') to prepend to each caption")
 }
 
 /**
