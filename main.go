@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/sagan/gocaptioner/cmd"
-	_ "github.com/sagan/gocaptioner/cmd/all"
+	"github.com/sagan/goaider/cmd"
+	_ "github.com/sagan/goaider/cmd/all"
 )
 
 func main() {

@@ -8,7 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/sagan/gocaptioner/cmd"
+	"github.com/sagan/goaider/cmd"
 )
 
 var dirPath string

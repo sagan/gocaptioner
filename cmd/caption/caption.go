@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sagan/gocaptioner/cmd"
+	"github.com/sagan/goaider/cmd"
 	"github.com/spf13/cobra"
 )
 

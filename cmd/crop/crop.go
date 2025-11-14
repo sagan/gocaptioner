@@ -12,7 +12,7 @@ import (
 	"github.com/disintegration/imaging" // ADD THIS
 	"github.com/muesli/smartcrop"
 	"github.com/rwcarlsen/goexif/exif" // ADD THIS
-	"github.com/sagan/gocaptioner/cmd"
+	"github.com/sagan/goaider/cmd"
 	"github.com/spf13/cobra"
 )
 

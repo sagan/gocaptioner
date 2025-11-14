@@ -1,4 +1,4 @@
-module github.com/sagan/gocaptioner
+module github.com/sagan/goaider
 
 go 1.24.0
 

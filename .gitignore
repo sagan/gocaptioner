@@ -2,5 +2,5 @@
 /test-images
 /test-images-crop
 *.exe
-gocaptioner
+/goaider
 /.local
