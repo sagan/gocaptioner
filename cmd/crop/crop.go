@@ -1,4 +1,4 @@
-package cmd
+package crop
 
 import (
 	"fmt"
@@ -12,6 +12,7 @@ import (
 	"github.com/disintegration/imaging" // ADD THIS
 	"github.com/muesli/smartcrop"
 	"github.com/rwcarlsen/goexif/exif" // ADD THIS
+	"github.com/sagan/gocaptioner/cmd"
 	"github.com/spf13/cobra"
 )
 
@@ -72,7 +73,7 @@ var cropCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(cropCmd)
+	cmd.RootCmd.AddCommand(cropCmd)
 	cropCmd.Flags().String("dir", "", "Required: Path to the image directory")
 	cropCmd.Flags().String("output", "", "Optional: output dir name. default to \"<input-dir>-crop\"")
 	cropCmd.Flags().Int("width", 1024, "Optional: target photo width. default: 1024.")

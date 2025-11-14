@@ -1,4 +1,4 @@
-package cmd
+package caption
 
 import (
 	"bytes"
@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/sagan/gocaptioner/cmd"
 	"github.com/spf13/cobra"
 )
 
@@ -136,7 +137,7 @@ var captionCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(captionCmd)
+	cmd.RootCmd.AddCommand(captionCmd)
 	captionCmd.Flags().String("dir", "", "Required: Path to the image directory")
 	captionCmd.Flags().Bool("force", false, "Optional: Force re-generation of all captions, even if .txt files exist")
 	captionCmd.Flags().String("identity", "", "Optional: The trigger word (e.g., 'foobar' or 'photo of foobar') to prepend to each caption")
